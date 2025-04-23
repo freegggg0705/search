@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search & Bookmark Toolbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input, button, a.button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+        }
+        button, a.button {
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+        }
+        a.button:hover, button:hover {
+            background-color: #e0e0e0;
+        }
+        .search-engine-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .add-engine-form {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .add-engine-form h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Search & Bookmark Toolbox</h2>
+        <!-- Search Query Input -->
+        <input type="text" id="queryInput" placeholder="Enter search query" oninput="updateLinks()">
+        <button onclick="performSearch()">Search</button>
+
+        <!-- Search Engine Buttons -->
+        <div id="searchEngineButtons" class="search-engine-buttons"></div>
+
+        <!-- Add New Button Form -->
+        <div class="add-engine-form">
+            <h3>Add New Button</h3>
+            <input type="text" id="engineName" placeholder="Button name (e.g., Google)">
+            <input type="text" id="engineUrl" placeholder="URL (e.g., https://www.google.com/search?q=%s)">
+            <button onclick="addSearchEngine()">Add Button</button>
+        </div>
+    </div>
+
+    <script>
+        // Predefined search engines and bookmarks
+        let searchEngines = [
+            { name: "Google", url: "https://www.google.com/search?q=%s" },
+            { name: "Bing", url: "https://www.bing.com/search?q=%s" },
+            { name: "Yandex", url: "https://yandex.com/search/?text=%s" },
+            { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=%s" },
+            { name: "Brave", url: "https://search.brave.com/search?q=%s&source=web" },
+            { name: "Etools", url: "https://etools.ch/search.do?q=%s" }
+        ];
+
+        // Load search engines from localStorage or use defaults
+        function loadSearchEngines() {
+            const storedEngines = localStorage.getItem('searchEngines');
+            if (storedEngines) {
+                searchEngines = JSON.parse(storedEngines);
+            } else {
+                saveSearchEngines();
+            }
+            renderSearchEngineButtons();
+        }
+
+        // Save search engines to localStorage
+        function saveSearchEngines() {
+            localStorage.setItem('searchEngines', JSON.stringify(searchEngines));
+        }
+
+        // Render search engine/bookmark links
+        function renderSearchEngineButtons() {
+            const container = document.getElementById('searchEngineButtons');
+            container.innerHTML = '';
+            searchEngines.forEach(engine => {
+                const link = document.createElement('a');
+                link.className = 'button';
+                link.textContent = engine.name;
+                link.setAttribute('data-url', engine.url);
+                link.href = getBaseUrl(engine.url); // Default to base URL
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                container.appendChild(link);
+            });
+            updateLinks(); // Update hrefs with current query
+        }
+
+        // Get base URL (remove %s and trailing query params)
+        function getBaseUrl(url) {
+            if (url.includes('%s')) {
+                // Remove %s and everything after it (e.g., &source=web)
+                const base = url.split('%s')[0];
+                // Remove trailing query params (e.g., ?q=)
+                return base.replace(/[?&][^=&]*=$/, '');
+            }
+            return url; // No %s, use URL as-is
+        }
+
+        // Update all link hrefs based on current query
+        function updateLinks() {
+            const query = document.getElementById('queryInput').value.trim();
+            const encodedQuery = encodeURIComponent(query);
+            const links = document.querySelectorAll('.search-engine-buttons a');
+            links.forEach(link => {
+                const baseUrl = link.getAttribute('data-url');
+                if (query && baseUrl.includes('%s')) {
+                    link.href = baseUrl.replace('%s', encodedQuery);
+                } else {
+                    link.href = getBaseUrl(baseUrl);
+                }
+            });
+        }
+
+        // Add new search engine or bookmark
+        function addSearchEngine() {
+            const name = document.getElementById('engineName').value.trim();
+            const url = document.getElementById('engineUrl').value.trim();
+            if (name && url) {
+                // Validate URL
+                try {
+                    new URL(url.replace('%s', '')); // Test URL without %s
+                    searchEngines.push({ name, url });
+                    saveSearchEngines();
+                    renderSearchEngineButtons();
+                    document.getElementById('engineName').value = '';
+                    document.getElementById('engineUrl').value = '';
+                } catch {
+                    alert('Please enter a valid URL.');
+                }
+            } else {
+                alert('Please enter both a name and a URL.');
+            }
+        }
+
+        // Perform search with the first engine (default search button)
+        function performSearch() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (searchEngines.length > 0) {
+                const url = searchEngines[0].url;
+                const targetUrl = query && url.includes('%s')
+                    ? url.replace('%s', encodeURIComponent(query))
+                    : getBaseUrl(url);
+                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+            } else {
+                alert('No buttons available.');
+            }
+        }
+
+        // Load search engines on page load
+        window.onload = loadSearchEngines;
+    </script>
+</body>
+</html>
