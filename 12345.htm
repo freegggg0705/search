@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Toolbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input, button {
+            margin: 5px;
+            padding: 8px;
+        }
+        .search-engine-buttons {
+            margin-top: 10px;
+        }
+        .search-engine-buttons button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .search-engine-buttons button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Search Toolbox</h2>
+        <!-- Search Query Input -->
+        <input type="text" id="queryInput" placeholder="Enter search query">
+        <button onclick="performSearch()">Search</button>
+
+        <!-- Search Engine Buttons -->
+        <div id="searchEngineButtons" class="search-engine-buttons"></div>
+    </div>
+
+    <script>
+        // Predefined search engines with %s placeholder
+        let searchEngines = [
+            { name: "Google", url: "https://www.google.com/search?q=%s" },
+            { name: "Bing", url: "https://www.bing.com/search?q=%s" },
+            { name: "Yandex", url: "https://yandex.com/search/?text=%s" },
+            { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=%s" },
+            { name: "Brave", url: "https://search.brave.com/search?q=%s&source=web" },
+            { name: "Etools", url: "https://etools.ch/search.do?q=%s" }
+        ];
+
+        // Load search engines from localStorage or use defaults
+        function loadSearchEngines() {
+            const storedEngines = localStorage.getItem('searchEngines');
+            if (storedEngines) {
+                searchEngines = JSON.parse(storedEngines);
+            } else {
+                saveSearchEngines(); // Save defaults to localStorage
+            }
+            renderSearchEngineButtons();
+        }
+
+        // Save search engines to localStorage
+        function saveSearchEngines() {
+            localStorage.setItem('searchEngines', JSON.stringify(searchEngines));
+        }
+
+        // Render buttons for search engines
+        function renderSearchEngineButtons() {
+            const container = document.getElementById('searchEngineButtons');
+            container.innerHTML = '';
+            searchEngines.forEach(engine => {
+                const button = document.createElement('button');
+                button.textContent = engine.name;
+                button.onclick = () => searchWithEngine(engine.url);
+                container.appendChild(button);
+            });
+        }
+
+        // Perform search with the selected engine
+        function searchWithEngine(url) {
+            const query = document.getElementById('queryInput').value.trim();
+            if (query) {
+                const encodedQuery = encodeURIComponent(query);
+                const searchUrl = url.replace('%s', encodedQuery);
+                window.open(searchUrl, '_blank', 'noopener,noreferrer');
+            } else {
+                alert('Please enter a search query.');
+            }
+        }
+
+        // Perform search with the first engine (default search button)
+        function performSearch() {
+            if (searchEngines.length > 0) {
+                searchWithEngine(searchEngines[0].url);
+            } else {
+                alert('No search engines available.');
+            }
+        }
+
+        // Load search engines on page load
+        window.onload = loadSearchEngines;
+    </script>
+</body>
+</html>
