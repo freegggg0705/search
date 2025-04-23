@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Toolbox</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input, button, a.button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px; /* Larger for mobile */
+            box-sizing: border-box;
+        }
+        input {
+            width: calc(100% - 20px); /* Full width minus padding */
+        }
+        button, a.button {
+            display: inline-block;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            cursor: pointer;
+            min-width: 80px; /* Prevent buttons from being too small */
+            text-align: center;
+        }
+        a.button:hover, button:hover {
+            background-color: #e0e0e0;
+        }
+        .search-engine-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap; /* Wrap buttons on small screens */
+            gap: 10px; /* Space between buttons */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Search Toolbox</h2>
+        <!-- Search Query Input -->
+        <input type="text" id="queryInput" placeholder="Enter search query" oninput="updateLinks()">
+        <button onclick="performSearch()">Search</button>
+
+        <!-- Search Engine Buttons -->
+        <div id="searchEngineButtons" class="search-engine-buttons"></div>
+    </div>
+
+    <script>
+        // Predefined search engines with %s placeholder
+        const searchEngines = [
+            { name: "Google", url: "https://www.google.com/search?q=%s" },
+            { name: "Bing", url: "https://www.bing.com/search?q=%s" },
+            { name: "Yandex", url: "https://yandex.com/search/?text=%s" },
+            { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=%s" },
+            { name: "Brave", url: "https://search.brave.com/search?q=%s&source=web" },
+            { name: "Etools", url: "https://etools.ch/search.do?q=%s" }
+        ];
+
+        // Load search engines from localStorage or use defaults
+        function loadSearchEngines() {
+            const storedEngines = localStorage.getItem('searchEngines');
+            if (storedEngines) {
+                searchEngines.splice(0, searchEngines.length, ...JSON.parse(storedEngines));
+            } else {
+                saveSearchEngines();
+            }
+            renderSearchEngineButtons();
+        }
+
+        // Save search engines to localStorage
+        function saveSearchEngines() {
+            localStorage.setItem('searchEngines', JSON.stringify(searchEngines));
+        }
+
+        // Render search engine links
+        function renderSearchEngineButtons() {
+            const container = document.getElementById('searchEngineButtons');
+            container.innerHTML = '';
+            searchEngines.forEach(engine => {
+                const link = document.createElement('a');
+                link.className = 'button';
+                link.textContent = engine.name;
+                link.setAttribute('data-url', engine.url); // Store base URL
+                link.href = '#'; // Placeholder href
+                link.target = '_blank'; // Open in new tab by default
+                link.rel = 'noopener noreferrer'; // Security
+                container.appendChild(link);
+            });
+            updateLinks(); // Update hrefs with current query
+        }
+
+        // Update all link hrefs based on current query
+        function updateLinks() {
+            const query = document.getElementById('queryInput').value.trim();
+            const encodedQuery = encodeURIComponent(query);
+            const links = document.querySelectorAll('.search-engine-buttons a');
+            links.forEach(link => {
+                const baseUrl = link.getAttribute('data-url');
+                if (query) {
+                    link.href = baseUrl.replace('%s', encodedQuery);
+                } else {
+                    link.href = '#'; // Prevent invalid links
+                }
+            });
+        }
+
+        // Perform search with the first engine (default search button)
+        function performSearch() {
+            const query = document.getElementById('queryInput').value.trim();
+            if (query && searchEngines.length > 0) {
+                const encodedQuery = encodeURIComponent(query);
+                const searchUrl = searchEngines[0].url.replace('%s', encodedQuery);
+                window.open(searchUrl, '_blank', 'noopener,noreferrer');
+            } else {
+                alert('Please enter a search query.');
+            }
+        }
+
+        // Load search engines on page load
+        window.onload = loadSearchEngines;
+    </script>
+</body>
+</html>
